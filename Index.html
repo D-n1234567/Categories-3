@@ -16,13 +16,6 @@
         }
         .shake-anim { animation: shake 0.4s ease-in-out; }
 
-        @keyframes pulse {
-            0% { transform: translateX(-50%) scale(1); }
-            50% { transform: translateX(-50%) scale(1.2); }
-            100% { transform: translateX(-50%) scale(1); }
-        }
-        .pulse-heart { animation: pulse 1.5s infinite ease-in-out; }
-
         .monster { width: 180px; height: 180px; position: relative; margin: 15px; flex-shrink: 0; }
         .m-body { 
             width: 100%; height: 100%; 
@@ -59,10 +52,8 @@
 
         .overlay { position: fixed; inset: 0; background: #581c87; color: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
         .instructions { background: rgba(255,255,255,0.15); padding: 15px 25px; border-radius: 25px; margin: 15px 0; max-width: 90%; font-size: 1.4rem; line-height: 1.4; border: 2px solid rgba(255,255,255,0.3); font-weight: bold; }
-        .main-title { font-size: 3.5rem; font-weight: 900; margin-bottom: 20px; text-shadow: 3px 3px 0 var(--m-dark); color: #fff; }
+        .main-title { font-size: 3rem; font-weight: 900; margin-bottom: 10px; text-shadow: 2px 2px 0 var(--m-dark); }
         .btn { background: var(--p); color: white; border: none; padding: 15px 45px; font-size: 1.8rem; border-radius: 50px; cursor: pointer; box-shadow: 0 6px 0 var(--dark-p); font-weight: bold; }
-        .btn-gray { background: #64748b; box-shadow: 0 6px 0 #475569; }
-        .btn-green { background: #22c55e; box-shadow: 0 6px 0 #16a34a; }
         
         #game-ui { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; }
         .header { width: 100%; padding: 15px; background: white; border-bottom: 5px solid #f3e8ff; text-align: center; }
@@ -88,9 +79,8 @@
             </div>
         </div>
     </div>
-    <div class="instructions">
-        בואו נעזור למפלצת. <br>
-        היא מאוד רעבה, הביאו לה את הפריט שמתאים לקבוצה שביקשה.
+    <div class="instructions" id="intro-text">
+        בואו נעזור לה! <br> בכל פעם גררו לפה של המפלצת את הפריט מהקבוצה שהיא מבקשת.
     </div>
     <div style="display: flex; align-items: center; gap: 15px; margin-top: 10px;">
         <button style="background:none; border:none; font-size:4rem; cursor:pointer;" onclick="sayIntro()">🔊</button>
@@ -98,23 +88,17 @@
     </div>
 </div>
 
-<div id="end-screen" class="overlay" style="display:none; background:#581c87;">
+<div id="end-screen" class="overlay" style="display:none; background:#22c55e;">
     <h1 style="font-size: 3.5rem; margin-bottom: 15px;">איזה יופי!</h1>
     <div class="monster">
-        <div class="pulse-heart" style="position: absolute; font-size: 5rem; top: -70px; left: 50%; z-index: 10;">❤️</div>
-        <div class="horn horn-l"></div><div class="horn horn-r"></div>
-        <div class="side-spike s-l1"></div><div class="side-spike s-l2"></div>
-        <div class="side-spike s-r1"></div><div class="side-spike s-r2"></div>
+        <div style="position: absolute; font-size: 4rem; top: -45px; left: 50%; transform: translateX(-50%); z-index: 10;">❤️</div>
         <div class="m-body">
             <div class="eye" style="left:25px"><div class="pupil"></div></div>
             <div class="eye" style="right:25px"><div class="pupil"></div></div>
             <div class="mouth smile"></div>
         </div>
     </div>
-    <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 40px; width: 250px;">
-        <button class="btn btn-green" onclick="location.reload()">שחק שוב</button>
-        <button class="btn btn-gray" onclick="alert('תודה ששיחקתם!')">סיום</button>
-    </div>
+    <button class="btn" onclick="startGame()" style="margin-top: 30px;">לשחק שוב</button>
 </div>
 
 <div id="game-ui">
@@ -141,27 +125,34 @@
 </div>
 
 <script>
+    const relatedGroups = {
+        "הפירות": ["הפירות", "הירקות", "הממתקים", "המאכלים"],
+        "הירקות": ["הפירות", "הירקות", "הממתקים", "המאכלים"],
+        "הממתקים": ["הפירות", "הירקות", "הממתקים", "המאכלים"],
+        "המאכלים": ["הפירות", "הירקות", "הממתקים", "המאכלים"],
+        "המשקאות": ["המשקאות", "המאכלים"]
+    };
+
     const data = [
-        {txt: "הרהיטים", voice: "הָרָהִיטִים", type: "obj", i: ["🪑", "🛋️", "🛏️", "🗄️", "🪞", "🚪", "🛁"]},
-        {txt: "הבגדים", voice: "הַבְּגָדִים", type: "obj", i: ["👕", "👗", "👖", "🧦", "🧥", "👒", "🧣", "👟", "👚", "🧤"]},
-        {txt: "החיות", voice: "הַחַיּוֹת", type: "obj", i: ["🐶", "🐱", "🦁", "🐰", "🐘", "🐵", "🦒", "🐮", "🐷", "🐸", "🐢", "🐧", "🦓"]},
-        {txt: "הפירות", voice: "הַפֵּירוֹת", type: "food", i: ["🍎", "🍌", "🍉", "🍓", "🍍", "🥭", "🍇", "🍒", "🥝", "🍑", "🍐", "🍊"]},
-        {txt: "הירקות", voice: "הַיְּרָקוֹת", type: "food", i: ["🥕", "🥦", "🍅", "🥒", "🌽", "🍆", "🧅", "🥔", "🫑", "🥬"]},
-        {txt: "כלי תחבורה", voice: "כְּלֵי תַּחְבּוּרָה", type: "obj", i: ["🚗", "✈️", "🚲", "🚢", "🚁", "🚂", "🚌", "🚜", "🚤", "🛵", "🚀"]},
-        {txt: "כלי נגינה", voice: "כְּלֵי נְגִינָה", type: "obj", i: ["🎸", "🎹", "🥁", "🎻", "🎺", "🎷", "🪕", "🪘", "🪗"]},
-        {txt: "כלי עבודה", voice: "כְּלֵי עֲבוֹדָה", type: "obj", i: ["🔨", "🔧", "🪚", "🪛", "🪜", "⚒️", "🪓", "🛠️"]},
-        {txt: "ציוד לבית ספר", voice: "צִיּוּד לְבֵית סֵפֶר", type: "obj", i: ["✏️", "📏", "🎒", "📓", "✂️", "📖", "🧮", "🖍️", "🖊️"]},
-        {txt: "הממתקים", voice: "הַמַּמְתָּקִים", type: "food", i: ["🍬", "🍭", "🍫", "🍦", "🧁", "🍮"]},
-        {txt: "כלי מטבח", voice: "כְּלֵי מִטְבָּח", type: "obj", i: ["🍽️", "🥣", "🍴", "🥄", "🍳", "🥘", "🫖", "🧂"]},
-        {txt: "המשחקים", voice: "הַמִּשְׂחָקִים", type: "obj", i: ["🧸", "🪀", "🧩", "🪁", "🤖", "🎮", "🎲", "⚽", "🎳", "🏀"]},
-        {txt: "המאכלים", voice: "הַמַּאֲכָלִים", type: "food_general", i: ["🍕", "🍔", "🥪", "🍝", "🥨", "🧀", "🍱", "🍚", "🥖", "🌮", "🍪", "🥞", "🍩", "🍲"]},
-        {txt: "המשקאות", voice: "הַמַּשְׁקָאוֹת", type: "drink", i: ["🧃", "🥛", "🥤", "☕", "🍵"]}
+        {txt: "הרהיטים", voice: "הַ , רהיטים", i: ["🪑", "🛋️", "🛏️", "🗄️", "🪞", "🚪", "🛁", "🖼️", "💡"]},
+        {txt: "הבגדים", voice: "הַ , בגדים", i: ["👕", "👗", "👖", "🧦", "🧥", "👒", "🧣", "👟", "👚", "🧤"]},
+        {txt: "החיות", voice: "הַ , חיות", i: ["🐶", "🐱", "🦁", "🐰", "🐘", "🐵", "🦒", "🐮", "🐷", "🐸", "🐢", "🐧", "🦓"]},
+        {txt: "הפירות", voice: "הַ , פירות", i: ["🍎", "🍌", "🍉", "🍓", "🍍", "🥭", "🍇", "🍒", "🥝", "🍑", "🍐", "🍊"]},
+        {txt: "הירקות", voice: "הַ , ירקות", i: ["🥕", "🥦", "🍅", "🥒", "🌽", "🍆", "🧅", "🥔", "🫑", "🥬"]},
+        {txt: "כלי תחבורה", voice: "כְּלֵי תחבורה", i: ["🚗", "✈️", "🚲", "🚢", "🚁", "🚂", "🚌", "🚜", "🚤", "🛵", "🚀"]},
+        {txt: "כלי נגינה", voice: "כְּלֵי נגינה", i: ["🎸", "🎹", "🥁", "🎻", "🎺", "🎷", "🪕", "🪘", "🪗", "🎼"]},
+        {txt: "כלי עבודה", voice: "כְּלֵי עבודה", i: ["🔨", "🔧", "🪚", "🪛", "🪜", "⚒️", "🪓", "🛠️"]},
+        {txt: "ציוד לבית ספר", voice: "ציוד לבית ספר", i: ["✏️", "📏", "🎒", "📓", "✂️", "📖", "🖍️", "🖊️"]},
+        {txt: "הממתקים", voice: "הַ , ממתקים", i: ["🍬", "🍭", "🍫", "🍦", "🧁", "🍮"]},
+        {txt: "כלי מטבח", voice: "כְּלֵי מטבח", i: ["🍽️", "🥣", "🍴", "🥄", "🍳", "🥘", "🫖", "🧂"]},
+        {txt: "המשחקים", voice: "הַ , משחקים", i: ["🧸", "🪀", "🧩", "🪁", "🤖", "🎮", "🎲", "⚽", "🎳", "🏀"]},
+        {txt: "המאכלים", voice: "הַ , מאכלים", i: ["🍕", "🍔", "🥪", "🍝", "🥨", "🧀", "🍚", "🥖", "🌮", "🍪", "🥞", "🍩", "🍲"]},
+        {txt: "המשקאות", voice: "הַ , משקאות", i: ["💧", "🧃", "🥛", "🥤", "☕", "🍵", "🧊"]}
     ];
 
     let score = 0, current = null, playlist = [];
-    const crunchSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2305/2305-preview.mp3');
-    const winSound = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
 
+    // פונקציה חיונית לשחרור חסימת שמע בדפדפנים
     function unlockAudio() {
         const msg = new SpeechSynthesisUtterance("");
         window.speechSynthesis.speak(msg);
@@ -170,19 +161,24 @@
     function talk(text, isMonster = true) {
         window.speechSynthesis.cancel();
         const msg = new SpeechSynthesisUtterance(text);
+        
+        const voices = window.speechSynthesis.getVoices();
+        const hebrewVoice = voices.find(v => v.lang.includes('he'));
+        if (hebrewVoice) msg.voice = hebrewVoice;
+
         msg.lang = 'he-IL';
-        msg.pitch = isMonster ? 2.0 : 1.1;
-        msg.rate = isMonster ? 1.0 : 0.85; 
+        msg.pitch = isMonster ? 1.4 : 1.1; 
+        msg.rate = 0.95;
         window.speechSynthesis.speak(msg);
     }
 
     function sayIntro() {
-        unlockAudio();
-        talk("בּוֹאוּ נַעֲזוֹר לַמִּפְלֶצֶת. הִיא מְאוֹד רְעֵבָה! הָבִיאוּ לָהּ אֶת הַפָּרִיט שֶׁמַּתְאִים לַקְּבוּצָה שֶׁבִּקְּשָׁה.", false);
+        unlockAudio(); // מפעיל את מנוע השמע בלחיצה הראשונה
+        talk("המפלצת רעבה. בואו נעזור לה! בכל פעם גררו לַה-פֶּה של המפלצת את ה פַּה-רִיט מהקבוצה שהיא מבקשת.", false);
     }
 
     function startGame() {
-        unlockAudio();
+        unlockAudio(); // מפעיל את מנוע השמע בלחיצה הראשונה
         score = 0;
         document.getElementById('score').innerText = score;
         document.getElementById('start-screen').style.display = 'none';
@@ -201,45 +197,39 @@
         if (score >= 9) {
             document.getElementById('game-ui').style.display = 'none';
             document.getElementById('end-screen').style.display = 'flex';
-            winSound.currentTime = 0;
-            winSound.play().catch(() => {});
-            setTimeout(() => talk("תּוֹדָה", true), 500);
+            talk("איזה יופי! אני שבעה!");
             return;
         }
         current = playlist[score];
         document.getElementById('ask-text').innerText = "תנו לי משהו מקבוצת " + current.txt;
-        setTimeout(repeatRequest, 150);
+        setTimeout(repeatRequest, 300);
         
         const grid = document.getElementById('items-grid');
         grid.innerHTML = '';
         
         let correctIcon = current.i[Math.floor(Math.random() * current.i.length)];
-        let options = [correctIcon];
+        let options = [{icon: correctIcon, cat: current.txt}];
         
-        let distractorPool = [];
-        data.forEach(cat => {
-            if (current.type === 'food_general' || current.type === 'food' || current.type === 'drink') {
-                if (cat.type !== 'food' && cat.type !== 'food_general' && cat.type !== 'drink') {
-                    distractorPool.push(...cat.i);
-                }
-            } else {
-                if (cat.txt !== current.txt) {
-                    distractorPool.push(...cat.i);
-                }
-            }
-        });
+        let forbiddenCats = relatedGroups[current.txt] || [current.txt];
+        let usedCats = [current.txt];
+        let availableCats = data.filter(c => !forbiddenCats.includes(c.txt));
 
-        distractorPool.sort(() => Math.random() - 0.5);
-        for(let item of distractorPool) {
-            if (options.length < 4 && !options.includes(item)) {
-                options.push(item);
+        while(options.length < 4) {
+            let rCatIndex = Math.floor(Math.random() * availableCats.length);
+            let rCat = availableCats[rCatIndex];
+            
+            if(!usedCats.includes(rCat.txt)) {
+                let rIcon = rCat.i[Math.floor(Math.random() * rCat.i.length)];
+                options.push({icon: rIcon, cat: rCat.txt});
+                usedCats.push(rCat.txt);
+                availableCats.splice(rCatIndex, 1);
             }
         }
         
         options.sort(() => Math.random() - 0.5).forEach(opt => {
             const slot = document.createElement('div'); slot.className = 'item-slot';
             const item = document.createElement('div'); item.className = 'item';
-            item.innerText = opt;
+            item.innerText = opt.icon;
             item.onpointerdown = dragStart;
             slot.appendChild(item); grid.appendChild(slot);
         });
@@ -266,9 +256,7 @@
 
             if (overlap && isCorrect) {
                 score++; document.getElementById('score').innerText = score;
-                crunchSound.currentTime = 0;
-                crunchSound.play().catch(() => {});
-                talk("יאמי", true);
+                talk("יאמי!", true);
                 document.getElementById('heart-pop').style.opacity = '1';
                 document.getElementById('heart-pop').style.transform = 'translate(-50%, -120px)';
                 setTimeout(() => { 
@@ -278,7 +266,7 @@
                 }, 1000);
             } else { 
                 if(overlap) {
-                    talk("אוֹי!", true);
+                    talk("אוי!", true);
                     mEl.classList.add('shake-anim');
                     setTimeout(() => mEl.classList.remove('shake-anim'), 400);
                 }
@@ -288,6 +276,9 @@
             el.onpointermove = null; el.onpointerup = null;
         };
     }
+    
+    // טעינת קולות מראש
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 </script>
 </body>
 </html>
